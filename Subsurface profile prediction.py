@@ -10,7 +10,7 @@ from sklearn.metrics import (
 )
 
 st.set_page_config(page_title="Geotechnical Site Characterization", layout="wide")
-st.title("🌍 Geotechnical Test Boreholes")
+st.title("🌍 Subsurface - Profile")
 
 # File upload
 uploaded_file = st.file_uploader("Upload Borehole Data (CSV)", type=["csv"])
@@ -41,8 +41,8 @@ if uploaded_file:
         y_train_proba = model.predict_proba(X_train)
         train_acc = accuracy_score(y_train, y_train_pred)
         train_loss = log_loss(y_train, y_train_proba)
-        st.write("### training accuracy:", train_acc)
-        st.write("### training loss:", train_loss)
+        st.write("### Training accuracy:", train_acc)
+        st.write("### Training loss:", train_loss)
                 
         # Evaluate on test set
         y_pred = model.predict(X_test)
@@ -57,4 +57,5 @@ if uploaded_file:
         st.write("### Testing precission:", prec)
         st.write("### Testing recall:", rec)
         st.write("### Testing f1 score:", f1)
+
 
