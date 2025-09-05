@@ -16,7 +16,7 @@ import matplotlib.patches as patches
 st.set_page_config(page_title="Geotechnical Soil Profile", layout="wide")
 
 # App header
-st.title("🌍 Subsurface - Profile")
+st.title("🌱 Geotechnical Soil Profile")
 
 # File uploader
 uploaded_file = st.file_uploader("Upload Borehole Data CSV", type=["csv"])
@@ -49,22 +49,25 @@ if uploaded_file:
 
             st.info("Running Bayesian Optimization... This may take a few minutes.")
 
-            # Define RF cross-validation function
+            # RF cross-validation function
             def rf_cv(n_estimators, max_depth, min_samples_split, min_samples_leaf):
-                model = RandomForestClassifier(
-                    n_estimators=int(n_estimators),
-                    max_depth=int(max_depth),
-                    min_samples_split=int(min_samples_split),
-                    min_samples_leaf=int(min_samples_leaf),
-                    max_features='sqrt',
-                    criterion='gini',
-                    class_weight='balanced',
-                    bootstrap=True,
-                    random_state=1,
-                    n_jobs=-1
-                )
-                f1 = cross_val_score(model, X_train, y_train, cv=5, scoring='f1_macro')
-                return f1.mean()
+                try:
+                    model = RandomForestClassifier(
+                        n_estimators=int(n_estimators),
+                        max_depth=int(max_depth),
+                        min_samples_split=int(min_samples_split),
+                        min_samples_leaf=int(min_samples_leaf),
+                        max_features='sqrt',
+                        criterion='gini',
+                        class_weight='balanced',
+                        bootstrap=True,
+                        random_state=1,
+                        n_jobs=-1
+                    )
+                    f1 = cross_val_score(model, X_train, y_train, cv=3, scoring='f1_macro')
+                    return f1.mean()
+                except:
+                    return 0  # return 0 if any error occurs
 
             # Parameter bounds
             pbounds = {
@@ -75,14 +78,18 @@ if uploaded_file:
             }
 
             # Bayesian Optimization
-            optimizer = BayesianOptimization(f=rf_cv, pbounds=pbounds, random_state=1)
-            optimizer.maximize(init_points=n_init, n_iter=n_iter, acq='ei')
+            try:
+                optimizer = BayesianOptimization(f=rf_cv, pbounds=pbounds, random_state=1)
+                optimizer.maximize(init_points=int(n_init), n_iter=int(n_iter), acq='ei')
+                best_params = {k: int(v) for k, v in optimizer.max['params'].items()}
+                st.write("### Best Hyperparameters Found")
+                st.json(best_params)
+            except Exception as e:
+                st.error(f"Error during Bayesian Optimization: {e}")
+                best_params = {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 1}
+                st.info("Using default parameters due to error.")
 
-            best_params = {k: int(v) for k, v in optimizer.max['params'].items()}
-            st.write("### Best Hyperparameters Found")
-            st.json(best_params)
-
-            # Train final model
+            # Train final RF
             rf = RandomForestClassifier(
                 **best_params,
                 max_features='sqrt',
@@ -117,4 +124,3 @@ if uploaded_file:
             print(f"F1 Score: {f1:.4f}")
             print(f"Log Loss: {loss:.4f}")
             print("Classification Report:\n", classification_report(y_test, y_pred))
-
