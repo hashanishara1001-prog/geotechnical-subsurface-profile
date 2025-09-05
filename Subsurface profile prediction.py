@@ -43,3 +43,18 @@ if uploaded_file:
         train_loss = log_loss(y_train, y_train_proba)
         st.write("### training accuracy:", train_acc)
         st.write("### training loss:", train_loss)
+                
+        # Evaluate on test set
+        y_pred = model.predict(X_test)
+        y_proba = model.predict_proba(X_test)
+        acc = accuracy_score(y_test, y_pred)
+        loss = log_loss(y_test, y_proba)
+        prec = precision_score(y_test, y_pred, average='weighted')
+        rec = recall_score(y_test, y_pred, average='weighted')
+        f1 = f1_score(y_test, y_pred, average='weighted')
+        st.write("### Testing accuracy:", acc)
+        st.write("### Testing loss:", loss)
+        st.write("### Testing precission:", prec)
+        st.write("### Testing recall:", rec)
+        st.write("### Testing f1 score:", f1)
+
