@@ -1,126 +1,55 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import (
-    classification_report, confusion_matrix, accuracy_score,
-    precision_score, recall_score, f1_score, log_loss
-)
-from bayes_opt import BayesianOptimization
-import joblib
-import matplotlib.patches as patches
+from sklearn.model_selection import train_test_split
 
-st.set_page_config(page_title="Geotechnical Soil Profile", layout="wide")
+st.set_page_config(page_title="Geotechnical Site Characterization", layout="wide")
+st.title("🌍 Subsurface-Profile")
 
-# App header
-st.title("🌱 Geotechnical Soil Profile")
-
-# File uploader
-uploaded_file = st.file_uploader("Upload Borehole Data CSV", type=["csv"])
+# File upload
+uploaded_file = st.file_uploader("Upload Borehole Data (CSV)", type=["csv"])
 
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
     st.write("### Borehole Data Preview", df.head())
 
-    # Required columns
-    required_cols = ["X", "Y", "TE", "BE", "formation"]
+    required_cols = ["X", "Y", "TE", "BE", "Lithology"]
     if not all(col in df.columns for col in required_cols):
         st.error(f"CSV must contain columns: {required_cols}")
     else:
-        # Encode soil labels
-        df['Soil_Label'] = df['formation'].astype('category').cat.codes
-        features = ['X', 'Y', 'TE', 'BE']
-        X = df[features]
-        y = df['Soil_Label']
+        X = df[["X", "Y", "TE", "BE"]]
+        y = df["Lithology"]
 
-        # Stratified train-test split
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=1, stratify=y
-        )
+        # Train/test split
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        st.subheader("⚙️ Bayesian Optimization Parameters")
-        n_init = st.number_input("Initial points (init_points)", min_value=1, max_value=20, value=5)
-        n_iter = st.number_input("Iterations (n_iter)", min_value=1, max_value=50, value=10)
+        # Train Random Forest
+        model = RandomForestClassifier(n_estimators=200, random_state=42)
+        model.fit(X_train, y_train)
 
-        if st.button("Run Bayesian Optimization & Train RF"):
+        # Predict on test set
+        y_test_pred = model.predict(X_test)
 
-            st.info("Running Bayesian Optimization... This may take a few minutes.")
+        st.success("✅ Random Forest model trained and predictions generated!")
 
-            # RF cross-validation function
-            def rf_cv(n_estimators, max_depth, min_samples_split, min_samples_leaf):
-                try:
-                    model = RandomForestClassifier(
-                        n_estimators=int(n_estimators),
-                        max_depth=int(max_depth),
-                        min_samples_split=int(min_samples_split),
-                        min_samples_leaf=int(min_samples_leaf),
-                        max_features='sqrt',
-                        criterion='gini',
-                        class_weight='balanced',
-                        bootstrap=True,
-                        random_state=1,
-                        n_jobs=-1
-                    )
-                    f1 = cross_val_score(model, X_train, y_train, cv=3, scoring='f1_macro')
-                    return f1.mean()
-                except:
-                    return 0  # return 0 if any error occurs
+        # Plot test boreholes
+        st.subheader("Test Boreholes Plot")
 
-            # Parameter bounds
-            pbounds = {
-                'n_estimators': (50, 300),
-                'max_depth': (5, 30),
-                'min_samples_split': (2, 10),
-                'min_samples_leaf': (1, 5)
-            }
+        # Compute midpoint for plotting
+        X_test_plot = X_test.copy()
+        X_test_plot["Midpoint"] = (X_test_plot["TE"] + X_test_plot["BE"]) / 2
+        X_test_plot["Predicted_Lithology"] = y_test_pred
 
-            # Bayesian Optimization
-            try:
-                optimizer = BayesianOptimization(f=rf_cv, pbounds=pbounds, random_state=1)
-                optimizer.maximize(init_points=int(n_init), n_iter=int(n_iter), acq='ei')
-                best_params = {k: int(v) for k, v in optimizer.max['params'].items()}
-                st.write("### Best Hyperparameters Found")
-                st.json(best_params)
-            except Exception as e:
-                st.error(f"Error during Bayesian Optimization: {e}")
-                best_params = {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 1}
-                st.info("Using default parameters due to error.")
+        # Plot
+        fig, ax = plt.subplots(figsize=(10, 6))
+        for lith in X_test_plot["Predicted_Lithology"].unique():
+            subset = X_test_plot[X_test_plot["Predicted_Lithology"] == lith]
+            ax.scatter(subset["X"], subset["Midpoint"], label=lith, s=60)
 
-            # Train final RF
-            rf = RandomForestClassifier(
-                **best_params,
-                max_features='sqrt',
-                criterion='gini',
-                class_weight='balanced',
-                bootstrap=True,
-                random_state=1,
-                n_jobs=-1
-            )
-            rf.fit(X_train, y_train)
-            joblib.dump(rf, "rf_bayes_model.pkl")
-
-            # Evaluate on training set
-            y_train_pred = rf.predict(X_train)
-            y_train_proba = rf.predict_proba(X_train)
-            train_acc = accuracy_score(y_train, y_train_pred)
-            train_loss = log_loss(y_train, y_train_proba)
-            print(f"Training Accuracy: {train_acc:.4f}")
-            print(f"Training Log Loss: {train_loss:.4f}")
-
-            # Evaluate on test set
-            y_pred = rf.predict(X_test)
-            y_proba = rf.predict_proba(X_test)
-            acc = accuracy_score(y_test, y_pred)
-            loss = log_loss(y_test, y_proba)
-            prec = precision_score(y_test, y_pred, average='weighted')
-            rec = recall_score(y_test, y_pred, average='weighted')
-            f1 = f1_score(y_test, y_pred, average='weighted')
-            print(f"Accuracy: {acc:.4f}")
-            print(f"Precision: {prec:.4f}")
-            print(f"Recall: {rec:.4f}")
-            print(f"F1 Score: {f1:.4f}")
-            print(f"Log Loss: {loss:.4f}")
-            print("Classification Report:\n", classification_report(y_test, y_pred))
+        ax.set_xlabel("X Coordinate")
+        ax.set_ylabel("Midpoint Depth (m)")
+        ax.set_title("Test Boreholes - Predicted Lithology")
+        ax.invert_yaxis()  # Depth increases downward
+        ax.legend(title="Lithology")
+        st.pyplot(fig)
