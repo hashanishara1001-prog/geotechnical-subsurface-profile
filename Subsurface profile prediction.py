@@ -168,12 +168,6 @@ if uploaded_file:
         st.write(f"- Accuracy: {acc:.4f}")
         st.write(f"- Log loss: {loss:.4f}")
 
-        # Classification report
-        st.write("#### Classification report")
-        cr = classification_report(y_test, y_pred, target_names=[label_map[i] for i in sorted(label_map.keys())], zero_division=0, output_dict=True)
-        cr_df = pd.DataFrame(cr).transpose()
-        st.dataframe(cr_df)
-
         # Confusion matrix
         cm = confusion_matrix(y_test, y_pred)
         fig_cm, ax_cm = plt.subplots(figsize=(6, 5))
@@ -193,6 +187,7 @@ if uploaded_file:
                 ax_cm.text(j, i, cm[i, j], ha='center', va='center', color='w' if cm[i, j] > cm.max()/2 else 'black')
         fig_cm.colorbar(im, ax=ax_cm)
         st.pyplot(fig_cm)
+
 
 
 
