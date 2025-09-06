@@ -188,6 +188,52 @@ if uploaded_file:
         fig_cm.colorbar(im, ax=ax_cm)
         st.pyplot(fig_cm)
 
+st.subheader("🔮 Predict Lithology for New Borehole")
+
+col1, col2 = st.columns(2)
+with col1:
+    new_x = st.number_input("X coordinate", value=float(df["X"].mean()))
+    new_y = st.number_input("Y coordinate", value=float(df["Y"].mean()))
+with col2:
+    new_te = st.number_input("Top Elevation (TE)", value=float(df["TE"].max()))
+    new_be = st.number_input("Bottom Elevation (BE)", value=float(df["BE"].min()))
+    
+# Discretize borehole depth into intervals (1 m steps here)
+step = 1.0
+depths = np.arange(new_te, new_be, -step)  # go downward
+segments = []
+
+for i in range(len(depths)-1):
+    seg_te = depths[i]
+    seg_be = depths[i+1]
+    X_new = pd.DataFrame([[new_x, new_y, seg_te, seg_be]], columns=['X','Y','TE','BE'])
+    pred_label = rf.predict(X_new)[0]
+    pred_lith = label_map[pred_label]
+    segments.append((seg_te, seg_be, pred_lith))
+
+# Plot new borehole log
+fig, ax = plt.subplots(figsize=(2,6))
+colors = plt.cm.tab20.colors
+unique_lith = list({seg[2] for seg in segments})
+color_map = {lith: colors[i % len(colors)] for i, lith in enumerate(unique_lith)}
+
+for seg_te, seg_be, lith in segments:
+    ax.fill_betweenx([seg_te, seg_be], 0, 1, color=color_map[lith], alpha=0.9)
+    ax.plot([0,1], [seg_te, seg_te], color='k', linewidth=0.5)
+
+ax.set_xlim(0,1)
+ax.set_xticks([])
+ax.set_ylabel("Elevation (m)")
+ax.set_title("Predicted Borehole Lithology")
+ax.invert_yaxis()
+
+legend_handles = [plt.matplotlib.patches.Patch(facecolor=color_map[l], edgecolor='k', label=l) for l in color_map]
+ax.legend(handles=legend_handles, title="Lithology", bbox_to_anchor=(1.05, 1), loc='upper left')
+
+st.pyplot(fig)
+
+
+
 
 
 
