@@ -41,7 +41,7 @@ if uploaded_file:
         y_train_proba = model.predict_proba(X_train)
         train_acc = accuracy_score(y_train, y_train_pred)
         train_loss = log_loss(y_train, y_train_proba)
-        st.write("### Training accuracy:", train_acc)
+        st.write("### Training accuracy:", f"{train_acc:.4f}")
                        
         # Evaluate on test set
         y_pred = model.predict(X_test)
@@ -52,6 +52,10 @@ if uploaded_file:
         rec = recall_score(y_test, y_pred, average='weighted')
         f1 = f1_score(y_test, y_pred, average='weighted')
         st.write("### Testing accuracy:", f"{acc:.4f}")
+        
+        st.subheader("⚙️ Bayesian Optimization Parameters")
+        n_init = st.number_input("Initial points (init_points)", min_value=1, max_value=20, value=5)
+        n_iter = st.number_input("Iterations (n_iter)", min_value=1, max_value=50, value=10)
 
 
 
