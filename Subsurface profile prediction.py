@@ -224,12 +224,12 @@ if uploaded_file:
         ax.set_xticks([])
         ax.set_ylabel("Elevation (m)")
         ax.set_title("Predicted Borehole Lithology")
-        ax.invert_yaxis()
         
         legend_handles = [plt.matplotlib.patches.Patch(facecolor=color_map[l], edgecolor='k', label=l) for l in color_map]
         ax.legend(handles=legend_handles, title="Lithology", bbox_to_anchor=(1.05, 1), loc='upper left')
         
         st.pyplot(fig)
+
 
 
 
