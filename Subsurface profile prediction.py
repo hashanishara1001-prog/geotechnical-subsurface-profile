@@ -127,7 +127,7 @@ if uploaded_file:
             st.info("Skipping Bayesian Optimization — using default hyperparameters.")
             best_params = default_params.copy()
 
-        st.subheader("Best Hyperparameters (used for final model)")
+        st.subheader("Best Hyperparameters")
         for k, v in best_params.items():
             st.write(f"- {k}: {v}")
 
@@ -172,21 +172,22 @@ if uploaded_file:
         cm = confusion_matrix(y_test, y_pred)
         fig_cm, ax_cm = plt.subplots(figsize=(4, 3))
         im = ax_cm.imshow(cm, interpolation='nearest', aspect='auto')
-        ax_cm.set_title("Confusion Matrix",fontsize=14)
-        ax_cm.set_xlabel("Predicted",fontsize=12)
-        ax_cm.set_ylabel("True",fontsize=12)
+        ax_cm.set_title("Confusion Matrix",fontsize=10)
+        ax_cm.set_xlabel("Predicted",fontsize=9)
+        ax_cm.set_ylabel("True",fontsize=9)
         ticks = list(range(len(label_map)))
         tick_names = [label_map[i] for i in ticks]
         ax_cm.set_xticks(ticks)
         ax_cm.set_yticks(ticks)
-        ax_cm.set_xticklabels(tick_names, rotation=45, ha='right',fontsize=10)
-        ax_cm.set_yticklabels(tick_names,fontsize=10)
+        ax_cm.set_xticklabels(tick_names, rotation=45, ha='right',fontsize=9)
+        ax_cm.set_yticklabels(tick_names,fontsize=9)
         # annotate
         for i in range(cm.shape[0]):
             for j in range(cm.shape[1]):
-                ax_cm.text(j, i, cm[i, j], ha='center', va='center', fontsize=9, color='w' if cm[i, j] > cm.max()/2 else 'black')
+                ax_cm.text(j, i, cm[i, j], ha='center', va='center', fontsize=8, color='w' if cm[i, j] > cm.max()/2 else 'black')
         fig_cm.colorbar(im, ax=ax_cm)
         st.pyplot(fig_cm)
+
 
 
 
