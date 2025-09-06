@@ -204,7 +204,7 @@ if uploaded_file:
             BE2 = st.number_input("Borehole B: Bottom Elevation (BE)", value=float(df["BE"].min()))
         
         # Number of points along the cross-section
-        n_points = st.number_input("Number of interpolated points along line", value=20, min_value=2)
+        n_points = st.number_input("Number of interpolated points along line", value=100, min_value=2)
         
         if st.button("Predict Cross-Section"):
             # Linear interpolation of coordinates and top/bottom elevations
@@ -244,6 +244,7 @@ if uploaded_file:
             ax.set_title("Predicted Cross-Section Lithology")
             ax.legend(title="Lithology", bbox_to_anchor=(1.05,1), loc='upper left')
             st.pyplot(fig)
+
 
 
 
