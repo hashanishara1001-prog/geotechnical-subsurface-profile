@@ -170,7 +170,7 @@ if uploaded_file:
 
         # Confusion matrix
         cm = confusion_matrix(y_test, y_pred)
-        fig_cm, ax_cm = plt.subplots(figsize=(6, 5))
+        fig_cm, ax_cm = plt.subplots(figsize=(4, 3))
         im = ax_cm.imshow(cm, interpolation='nearest', aspect='auto')
         ax_cm.set_title("Confusion Matrix")
         ax_cm.set_xlabel("Predicted")
@@ -187,6 +187,7 @@ if uploaded_file:
                 ax_cm.text(j, i, cm[i, j], ha='center', va='center', color='w' if cm[i, j] > cm.max()/2 else 'black')
         fig_cm.colorbar(im, ax=ax_cm)
         st.pyplot(fig_cm)
+
 
 
 
