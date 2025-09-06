@@ -8,6 +8,7 @@ from sklearn.metrics import (
     classification_report, confusion_matrix, log_loss,
     accuracy_score, precision_score, recall_score, f1_score
 )
+from bayes_opt import BayesianOptimization
 
 st.set_page_config(page_title="Geotechnical Site Characterization", layout="wide")
 st.title("🌍 Subsurface - Profile")
@@ -100,6 +101,7 @@ if uploaded_file:
         f1 = f1_score(y_test, y_pred, average='weighted')
         st.write("### Testing accuracy:", f"{acc:.4f}")
         
+
 
 
 
