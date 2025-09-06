@@ -219,18 +219,18 @@ color_map = {lith: colors[i % len(colors)] for i, lith in enumerate(unique_lith)
 
 for seg_te, seg_be, lith in segments:
     ax.fill_betweenx([seg_te, seg_be], 0, 1, color=color_map[lith], alpha=0.9)
-    ax.plot([0,1], [seg_te, seg_te], color='k', linewidth=0.5)
+    ax.plot([0,1], [seg_te, seg_te], color='none', linewidth=0.5)
 
 ax.set_xlim(0,1)
 ax.set_xticks([])
 ax.set_ylabel("Elevation (m)")
 ax.set_title("Predicted Borehole Lithology")
-ax.invert_yaxis()
 
 legend_handles = [plt.matplotlib.patches.Patch(facecolor=color_map[l], edgecolor='k', label=l) for l in color_map]
 ax.legend(handles=legend_handles, title="Lithology", bbox_to_anchor=(1.05, 1), loc='upper left')
 
 st.pyplot(fig)
+
 
 
 
