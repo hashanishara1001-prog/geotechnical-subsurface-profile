@@ -172,21 +172,22 @@ if uploaded_file:
         cm = confusion_matrix(y_test, y_pred)
         fig_cm, ax_cm = plt.subplots(figsize=(4, 3))
         im = ax_cm.imshow(cm, interpolation='nearest', aspect='auto')
-        ax_cm.set_title("Confusion Matrix")
-        ax_cm.set_xlabel("Predicted")
-        ax_cm.set_ylabel("True")
+        ax_cm.set_title("Confusion Matrix",fontsize=14)
+        ax_cm.set_xlabel("Predicted",fontsize=12)
+        ax_cm.set_ylabel("True",fontsize=12)
         ticks = list(range(len(label_map)))
         tick_names = [label_map[i] for i in ticks]
         ax_cm.set_xticks(ticks)
         ax_cm.set_yticks(ticks)
-        ax_cm.set_xticklabels(tick_names, rotation=45, ha='right')
-        ax_cm.set_yticklabels(tick_names)
+        ax_cm.set_xticklabels(tick_names, rotation=45, ha='right',fontsize=10)
+        ax_cm.set_yticklabels(tick_names,fontsize=10)
         # annotate
         for i in range(cm.shape[0]):
             for j in range(cm.shape[1]):
-                ax_cm.text(j, i, cm[i, j], ha='center', va='center', color='w' if cm[i, j] > cm.max()/2 else 'black')
+                ax_cm.text(j, i, cm[i, j], ha='center', va='center', fontsize=9, color='w' if cm[i, j] > cm.max()/2 else 'black')
         fig_cm.colorbar(im, ax=ax_cm)
         st.pyplot(fig_cm)
+
 
 
 
