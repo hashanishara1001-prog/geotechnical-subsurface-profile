@@ -167,9 +167,6 @@ if uploaded_file:
         st.write("### Test metrics")
         st.write(f"- Accuracy: {acc:.4f}")
         st.write(f"- Log loss: {loss:.4f}")
-        st.write(f"- Precision (weighted): {prec:.4f}")
-        st.write(f"- Recall (weighted): {rec:.4f}")
-        st.write(f"- F1-score (weighted): {f1:.4f}")
 
         # Classification report
         st.write("#### Classification report")
@@ -196,5 +193,6 @@ if uploaded_file:
                 ax_cm.text(j, i, cm[i, j], ha='center', va='center', color='w' if cm[i, j] > cm.max()/2 else 'black')
         fig_cm.colorbar(im, ax=ax_cm)
         st.pyplot(fig_cm)
+
 
 
