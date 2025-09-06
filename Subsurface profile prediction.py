@@ -188,47 +188,64 @@ if uploaded_file:
         fig_cm.colorbar(im, ax=ax_cm)
         st.pyplot(fig_cm)
 
-        st.subheader("🔮 Predict Lithology for New Borehole")
-        
+        st.subheader("🌐 Predict 2D Cross-Section Between Two Boreholes")
+
         col1, col2 = st.columns(2)
         with col1:
-            new_x = st.number_input("X coordinate", value=float(df["X"].mean()))
-            new_y = st.number_input("Y coordinate", value=float(df["Y"].mean()))
+            X1 = st.number_input("Borehole A: X", value=float(df["X"].min()))
+            Y1 = st.number_input("Borehole A: Y", value=float(df["Y"].min()))
+            TE1 = st.number_input("Borehole A: Top Elevation (TE)", value=float(df["TE"].max()))
+            BE1 = st.number_input("Borehole A: Bottom Elevation (BE)", value=float(df["BE"].min()))
+        
         with col2:
-            new_te = st.number_input("Top Elevation (TE)", value=float(df["TE"].max()))
-            new_be = st.number_input("Bottom Elevation (BE)", value=float(df["BE"].min()))
+            X2 = st.number_input("Borehole B: X", value=float(df["X"].max()))
+            Y2 = st.number_input("Borehole B: Y", value=float(df["Y"].max()))
+            TE2 = st.number_input("Borehole B: Top Elevation (TE)", value=float(df["TE"].max()))
+            BE2 = st.number_input("Borehole B: Bottom Elevation (BE)", value=float(df["BE"].min()))
         
-        # Discretize borehole depth into intervals (0.1 m steps here)
-        step = 0.1
-        depths = np.arange(max(new_te, new_be), min(new_te, new_be), -step)
-        segments = []
+        # Number of points along the cross-section
+        n_points = st.number_input("Number of interpolated points along line", value=20, min_value=2)
         
-        for i in range(len(depths)-1):
-            seg_te = depths[i]
-            seg_be = depths[i+1]
-            X_new = pd.DataFrame([[new_x, new_y, seg_te, seg_be]], columns=['X','Y','TE','BE'])
-            pred_label = rf.predict(X_new)[0]
-            pred_lith = label_map[pred_label]
-            segments.append((seg_te, seg_be, pred_lith))
+        if st.button("Predict Cross-Section"):
+            # Linear interpolation of coordinates and top/bottom elevations
+            X_line = np.linspace(X1, X2, n_points)
+            Y_line = np.linspace(Y1, Y2, n_points)
+            TE_line = np.linspace(TE1, TE2, n_points)
+            BE_line = np.linspace(BE1, BE2, n_points)
         
-        # Plot new borehole log
-        fig, ax = plt.subplots(figsize=(2,6))
-        colors = plt.cm.tab20.colors
-        unique_lith = list({seg[2] for seg in segments})
-        color_map = {lith: colors[i % len(colors)] for i, lith in enumerate(unique_lith)}
+            # Depth step
+            step = 1.0
+            all_segments = []
         
-        for seg_te, seg_be, lith in segments:
-            ax.fill_betweenx([seg_te, seg_be], 0, 1, color=color_map[lith], alpha=0.9)
+            for xi, yi, te_i, be_i in zip(X_line, Y_line, TE_line, BE_line):
+                depths = np.arange(max(te_i, be_i), min(te_i, be_i), -step)
+                for j in range(len(depths)-1):
+                    seg_te = depths[j]
+                    seg_be = depths[j+1]
+                    X_new = pd.DataFrame([[xi, yi, seg_te, seg_be]], columns=['X','Y','TE','BE'])
+                    pred_label = rf.predict(X_new)[0]
+                    pred_lith = label_map[pred_label]
+                    all_segments.append({'X': xi, 'Y': yi, 'Midpoint': (seg_te+seg_be)/2, 'Lithology': pred_lith})
         
-        ax.set_xlim(0,1)
-        ax.set_xticks([])
-        ax.set_ylabel("Elevation (m)")
-        ax.set_title("Predicted Borehole Lithology")
+            df_cross = pd.DataFrame(all_segments)
         
-        legend_handles = [plt.matplotlib.patches.Patch(facecolor=color_map[l], edgecolor='k', label=l) for l in color_map]
-        ax.legend(handles=legend_handles, title="Lithology", bbox_to_anchor=(1.05, 1), loc='upper left')
+            # Plot cross-section
+            fig, ax = plt.subplots(figsize=(12,6))
+            colors = plt.cm.tab20.colors
+            unique_lith = df_cross['Lithology'].unique()
+            color_map = {lith: colors[i % len(colors)] for i, lith in enumerate(unique_lith)}
         
-        st.pyplot(fig)
+            for lith in unique_lith:
+                subset = df_cross[df_cross['Lithology']==lith]
+                ax.scatter(subset['X'], subset['Midpoint'], color=color_map[lith], s=50, label=lith)
+        
+            ax.set_xlabel("X Coordinate")
+            ax.set_ylabel("Elevation (m)")
+            ax.set_title("Predicted Cross-Section Lithology")
+            ax.invert_yaxis()
+            ax.legend(title="Lithology", bbox_to_anchor=(1.05,1), loc='upper left')
+            st.pyplot(fig)
+
 
 
 
