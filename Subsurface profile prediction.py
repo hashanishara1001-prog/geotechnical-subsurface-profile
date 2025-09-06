@@ -198,8 +198,8 @@ if uploaded_file:
             new_te = st.number_input("Top Elevation (TE)", value=float(df["TE"].max()))
             new_be = st.number_input("Bottom Elevation (BE)", value=float(df["BE"].min()))
         
-        # Discretize borehole depth into intervals (1 m steps here)
-        step = 1.0
+        # Discretize borehole depth into intervals (0.1 m steps here)
+        step = 0.1
         depths = np.arange(max(new_te, new_be), min(new_te, new_be), -step)
         segments = []
         
@@ -229,6 +229,7 @@ if uploaded_file:
         ax.legend(handles=legend_handles, title="Lithology", bbox_to_anchor=(1.05, 1), loc='upper left')
         
         st.pyplot(fig)
+
 
 
 
