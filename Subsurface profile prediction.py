@@ -242,9 +242,9 @@ if uploaded_file:
             ax.set_xlabel("X Coordinate")
             ax.set_ylabel("Elevation (m)")
             ax.set_title("Predicted Cross-Section Lithology")
-            ax.invert_yaxis()
             ax.legend(title="Lithology", bbox_to_anchor=(1.05,1), loc='upper left')
             st.pyplot(fig)
+
 
 
 
