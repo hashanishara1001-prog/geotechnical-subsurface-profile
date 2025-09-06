@@ -31,21 +31,68 @@ if uploaded_file:
         
         # Stratified split
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1, stratify=y)
-       
-        # Train Random Forest
-        model = RandomForestClassifier(n_estimators=200, random_state=1)
-        model.fit(X_train, y_train)
+        
+        st.subheader("⚙️ Bayesian Optimization Parameters")
+        n_init = st.number_input("Initial points (init_points)", min_value=1, max_value=20, value=5)
+        n_iter = st.number_input("Iterations (n_iter)", min_value=1, max_value=50, value=10)
+        
+        # Define Bayesian Optimization function
+        def rf_cv(n_estimators, max_depth, min_samples_split, min_samples_leaf):
+            model = RandomForestClassifier(
+                n_estimators=int(n_estimators),
+                max_depth=int(max_depth),
+                min_samples_split=int(min_samples_split),
+                min_samples_leaf=int(min_samples_leaf),
+                max_features='sqrt',
+                criterion='gini',
+                class_weight='balanced',
+                bootstrap=True,
+                random_state=1,
+                n_jobs=-1
+            )
+            f1 = cross_val_score(model, X_train, y_train, cv=5, scoring='f1_macro')
+            return f1.mean()
+        
+        # Define parameter bounds
+        pbounds = {
+            'n_estimators': (10,20),
+            'max_depth': (10, 30),
+            'min_samples_split': (2, 10),
+            'min_samples_leaf': (1, 5),
+        }
+        optimizer = BayesianOptimization(f=rf_cv, pbounds=pbounds, random_state=1, verbose=2)
+        optimizer.maximize(init_points= int(n_init), n_iter=int(n_iter))
+        
+        # Best parameters
+        best_params = optimizer.max['params']
+        # best_params = {k: int(v) for k, v in best_params.items()}
+        best_params = {k: int(v) if v is not None else None for k, v in best_params.items()}
+        st.subheader("Best Hyperparameters from Bayesian Optimization:")
+        for key, value in best_params.items():
+            st.write(f"  {key}: {value}")
+        
+        # Final model
+        rf = RandomForestClassifier(
+            **best_params,
+            max_features='sqrt',
+            criterion='gini',
+            class_weight='balanced',
+            bootstrap=True,
+            random_state=1,
+            n_jobs=-1
+        )
+        rf.fit(X_train, y_train)
         
         # Evaluate on training set
-        y_train_pred = model.predict(X_train)
-        y_train_proba = model.predict_proba(X_train)
+        y_train_pred = rf.predict(X_train)
+        y_train_proba = rf.predict_proba(X_train)
         train_acc = accuracy_score(y_train, y_train_pred)
         train_loss = log_loss(y_train, y_train_proba)
         st.write("### Training accuracy:", f"{train_acc:.4f}")
                        
         # Evaluate on test set
-        y_pred = model.predict(X_test)
-        y_proba = model.predict_proba(X_test)
+        y_pred = rf.predict(X_test)
+        y_proba = rf.predict_proba(X_test)
         acc = accuracy_score(y_test, y_pred)
         loss = log_loss(y_test, y_proba)
         prec = precision_score(y_test, y_pred, average='weighted')
@@ -53,9 +100,7 @@ if uploaded_file:
         f1 = f1_score(y_test, y_pred, average='weighted')
         st.write("### Testing accuracy:", f"{acc:.4f}")
         
-        st.subheader("⚙️ Bayesian Optimization Parameters")
-        n_init = st.number_input("Initial points (init_points)", min_value=1, max_value=20, value=5)
-        n_iter = st.number_input("Iterations (n_iter)", min_value=1, max_value=50, value=10)
+
 
 
 
