@@ -51,7 +51,8 @@ if uploaded_file:
         prec = precision_score(y_test, y_pred, average='weighted')
         rec = recall_score(y_test, y_pred, average='weighted')
         f1 = f1_score(y_test, y_pred, average='weighted')
-        st.write("### Testing accuracy:", acc)
+        st.write("### Testing accuracy:", f"{acc:.4f}")
+
 
 
 
